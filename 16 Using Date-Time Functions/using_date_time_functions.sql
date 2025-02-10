@@ -151,6 +151,15 @@ SELECT
 SELECT
 	EXTRACT('CENTURY' FROM INTERVAL '500 YEARS 2 MONTHS 11 DAYS');
 
+-- DATE_PART(field, source);
+	
+SELECT 	
+	DATE_PART('century', CURRENT_TIMESTAMP) AS century,
+	DATE_PART('year', CURRENT_TIMESTAMP) as year,
+	DATE_PART('day', CURRENT_TIMESTAMP) as day,
+	DATE_PART('hour', CURRENT_TIMESTAMP) as hour,
+	DATE_PART('week', CURRENT_TIMESTAMP) as week;
+
 --#####################################################################
 
 -- 8. Using math operations with dates
@@ -227,3 +236,113 @@ SELECT AGE(DATE '2012-12-12');
 --#####################################################################
 
 -- 13. CURRENT_TIME and CURRENT_DATE
+
+--#####################################################################
+
+-- 14. Date accuracy with EPOC
+
+-- Arithmatic with dates are sometimes complex, Consider foloowing for accuracy,
+-- 1. Timezones
+-- 2. Daylight saving times
+
+-- AGE can be used for above but it's not accurarte, we can use EPOCH for that
+
+SELECT
+	AGE(TIMESTAMP '2025-02-10', TIMESTAMP '2025-01-06'),
+	EXTRACT('EPOCH' FROM TIMESTAMPTZ '2025-02-10') -
+	EXTRACT('EPOCH' FROM TIMESTAMPTZ '2025-01-06')
+	AS "Difference in Seconds";
+
+SELECT
+	(EXTRACT('EPOCH' FROM TIMESTAMPTZ '2025-02-10') -
+	EXTRACT('EPOCH' FROM TIMESTAMPTZ '2025-01-06'))
+	/60/60/24
+	AS "Difference in days";
+	
+SELECT
+	(EXTRACT('EPOCH' FROM TIMESTAMPTZ '2025-02-10') -
+	EXTRACT('EPOCH' FROM TIMESTAMPTZ '2025-01-06'))
+	/60/60/24
+	AS "EPOCH",
+
+	AGE(TIMESTAMP '2025-02-10', TIMESTAMP '2025-01-06') AS "AGE",
+
+	TIMESTAMP '2025-02-10' - TIMESTAMP '2025-01-06' AS "TIMESTAMPTZ";
+
+--#####################################################################
+
+-- 15. Using time, date and timestamp in table
+
+DROP TABLE IF EXISTS table_times;
+CREATE TABLE table_times (
+	time_id SERIAL PRIMARY KEY,
+	start_time TIME,
+	start_date DATE,
+	start_timestamp TIMESTAMP
+);
+
+SELECT * FROM table_times;
+
+INSERT INTO table_times(start_date, start_time, start_timestamp)
+VALUES 
+('epoch', 'allballs', 'infinity');
+
+--#####################################################################
+
+-- 16. View and Set timezones
+
+SELECT * FROM pg_timezone_names;
+SELECT * FROM pg_timezone_abbrevs;
+
+SHOW TIME ZONE;
+
+SET TIME ZONE 'US/Alaska';
+
+SELECT CURRENT_TIMESTAMP;
+
+SET TIME ZONE 'Asia/Calcutta';
+
+--#####################################################################
+
+-- 17. Handle timezones
+
+-- Always use date and time when using timestamp
+-- Try avoiding numeric offsetst with timezones
+
+ALTER TABLE table_times
+ADD COLUMN end_timestamp TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE table_times
+ADD COLUMN end_time TIME WITH TIME ZONE;
+
+SELECT * FROM table_times;
+
+INSERT INTO table_times (end_timestamp, end_time)
+VALUES
+('2020-01-20 11:20:00 US/Pacific', '11:20:00+6');
+
+-- NOTE: In table o/p is always according to a timezone of server
+-- So consider timestamp with timezone always for better and easy execution and less cpmplexity
+
+--#####################################################################
+
+-- 18. date_trunc() Function
+
+-- To truncate a timestamo or interval to a specified level of precision
+
+-- SYNTAX:
+-- date_trunc('datepart', field)
+
+SELECT
+	DATE_TRUNC('year', CURRENT_TIMESTAMP) "Year",
+	DATE_TRUNC('hour', CURRENT_TIMESTAMP) "Hour",
+	DATE_TRUNC('second', CURRENT_TIMESTAMP) "Seconds";
+
+-- Count the number of movies by release month
+
+SELECT
+	DATE_TRUNC('month', release_date) "release_month",
+	COUNT(movie_id)
+FROM movies
+GROUP BY "release_month"
+ORDER BY 2 DESC;
