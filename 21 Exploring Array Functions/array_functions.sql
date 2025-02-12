@@ -198,3 +198,70 @@ SET phones[1] = '9999999999'
 WHERE teacher_id = 1;
 
 SELECT * FROM table_teachers;
+
+-- IGNORED ARRAY DIMENSIONS
+-- PostgreSQL by default ignores dimensions
+CREATE TABLE teachers2 (
+	teacher_id SERIAL PRIMARY KEY,
+	name VARCHAR(150),
+	phones TEXT ARRAY[1]
+);
+
+INSERT INTO teachers2 (name, phones)
+VALUES
+('Adam', ARRAY['(111)-222-3333','(555)-666-7777']);
+
+SELECT * FROM teachers2;
+
+
+-- DISPLAY ARRAY ELEMENTS
+-- unnest(array) -- Used to display all array elems individually
+SELECT teacher_id, name, unnest(phones)
+FROM teachers;
+
+SELECT teacher_id, name, unnest(phones)
+FROM teachers
+ORDER BY 3;
+
+
+-- MULTI DIMENSIONAL ARRAYS
+-- Using Multidimensional arrays in tables
+CREATE TABLE students (
+	student_id SERIAL PRIMARY KEY,
+	student_name VARCHAR(100),
+	student_grade INTEGER[][]
+);
+
+INSERT INTO students (student_name, student_grade)
+VALUES
+('S1','{90, 2020}');
+
+SELECT * FROM students;
+
+INSERT INTO students (student_name, student_grade)
+VALUES
+('S2','{80, 2020}'),
+('S3','{70, 2019}'),
+('S2','{60, 2019}');
+
+SELECT * FROM students;
+
+
+SELECT student_grade[1] FROM students;
+
+SELECT student_grade[2] FROM students;
+
+
+SELECT * FROM students
+WHERE student_grade[2] = '2020';
+
+SELECT * FROM students
+WHERE student_grade @> '{2020}';
+
+SELECT * FROM students
+WHERE 2020 = ANY(student_grade);
+
+SELECT * FROM students
+WHERE student_grade[1] > '80';
+
+-- Array vs JSONB 
